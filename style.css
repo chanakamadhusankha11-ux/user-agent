@@ -1,0 +1,64 @@
+/* ======================================= */
+/* ==      AERO AGENT - UI STYLES       == */
+/* ======================================= */
+
+:root { /* ... Color palette remains the same as the quality version ... */ }
+.light-mode { /* ... Light mode colors ... */ }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: var(--text-primary); min-height: 100vh; overflow: auto; position: relative; }
+#background-canvas { position: fixed; top: 0; left: 0; z-index: -1; }
+.top-bar { /* ... same as before ... */ }
+.main-container { text-align: center; padding: 100px 20px 40px; z-index: 1; max-width: 500px; margin: 0 auto; }
+.admin-container { max-width: 600px; }
+.card { /* ... same quality neumorphic styles ... */ }
+.stats-display { /* ... same ... */ }
+
+/* --- USER AGENT DISPLAY STYLES --- */
+#user-agent-display {
+    min-height: 80px; padding: 15px; margin-bottom: 20px; border-radius: 12px; cursor: pointer;
+    box-shadow: inset -3px -3px 7px var(--shadow-light), inset 3px 3px 7px var(--shadow-dark);
+    display: flex; justify-content: center; align-items: center; transition: all 0.3s;
+    word-break: break-all; font-family: var(--font-mono); font-size: 0.9rem;
+}
+#user-agent-display:hover { box-shadow: inset -5px -5px 10px var(--shadow-light), inset 5px 5px 10px var(--shadow-dark); }
+#user-agent-text { opacity: 0.8; }
+
+/* --- NEW: DETAILS GRID --- */
+.details-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px; margin-bottom: 25px; text-align: center;
+}
+.detail-item {
+    background: rgba(0,0,0,0.1); padding: 10px; border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.light-mode .detail-item { background: rgba(255,255,255,0.4); }
+.detail-item label { font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 5px; }
+.detail-item span { font-family: var(--font-mono); font-weight: 700; color: var(--primary); }
+
+#request-btn { /* ... same button styles ... */ }
+.secondary-card, .history-container, #history-list, #history-list li, #notification-container, .toast-notification { /* ... same as before ... */ }
+
+/* --- ADMIN PAGE SPECIFIC STYLES --- */
+.file-input-label {
+    display: block; width: 100%; padding: 20px; margin-bottom: 20px;
+    border: 2px dashed var(--border-color); border-radius: 10px; cursor: pointer;
+    color: var(--text-secondary); transition: all 0.2s ease;
+}
+.file-input-label:hover { border-color: var(--primary); color: var(--primary); }
+#file-name-display { font-family: var(--font-mono); }
+textarea, input[type="password"] { /* ... same input styles ... */ }
+#upload-btn { /* ... same button styles with green color ... */ }
+.back-link { /* ... same ... */ }
+
+#batch-list .batch-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background-color: rgba(0, 0, 0, 0.2); padding: 10px 15px;
+    border-radius: 8px; margin-bottom: 10px;
+}
+.batch-item p { margin: 0; font-family: var(--font-mono); font-size: 0.9rem; }
+.delete-btn {
+    background: #e74c3c; color: white; border: none; padding: 5px 10px;
+    font-size: 0.8rem; border-radius: 5px; cursor: pointer;
+}
+.delete-btn:hover { background: #c0392b; }

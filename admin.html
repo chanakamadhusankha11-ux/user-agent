@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-mode">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aero Agent Admin</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="admin-body">
+    <div id="notification-container"></div>
+    <main class="main-container admin-container">
+        <header class="header"><h1>AERO ADMIN</h1></header>
+
+        <section class="card">
+            <h2>Upload User Agent List (.csv)</h2>
+            
+            <!-- NEW: File input instead of textarea -->
+            <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+            <label for="csv-file-input" class="file-input-label">
+                <span id="file-name-display">Click to select a .csv file</span>
+            </label>
+
+            <input type="password" id="passcode-input" placeholder="Enter Admin Passcode">
+            <button id="upload-btn"><div class="btn-bg"></div><span class="btn-text">UPLOAD AGENTS</span></button>
+        </section>
+
+        <!-- NEW: Batch Management Section -->
+        <section class="card secondary-card">
+            <h2>Manage Uploads (Batches)</h2>
+            <div class="history-container">
+                <ul id="batch-list"><li class="history-placeholder">Loading batches...</li></ul>
+            </div>
+        </section>
+
+        <a href="index.html" class="back-link">← Back to User Page</a>
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- NEW: Papa Parse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
+    <!-- App Script -->
+    <script src="script.js"></script>
+</body>
+</html>
