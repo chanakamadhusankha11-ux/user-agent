@@ -1,246 +1,369 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // =================================================================
-    // == YOUR FIREBASE CONFIGURATION ==
-    // =================================================================
-    const firebaseConfig = {
-      apiKey: "AIzaSyCiOVq6FSrrJEacCsBDOFxtMPkgTGFaSes",
-      authDomain: "aero-user-agent-tool.firebaseapp.com",
-      projectId: "aero-user-agent-tool",
-      storageBucket: "aero-user-agent-tool.appspot.com", // Corrected domain
-      messagingSenderId: "292085315062",
-      appId: "1:292085315062:web:74d8d8ff0782b9f81083d7",
-      measurementId: "G-8XR5J0JK4Y"
-    };
-    // =================================================================
+// ============================================
+// AERO AGENT SYSTEM - Professional Edition
+// ============================================
+
+// Import Firebase and PapaParse
+import { initializeApp } from "firebase/app"
+import { getFirestore, collection, doc, updateDoc } from "firebase/firestore"
+import Papa from "papaparse"
+
+document.addEventListener("DOMContentLoaded", () => {
+  const firebaseConfig = {
+    apiKey: "AIzaSyCiOVq6FSrrJEacCsBDOFxtMPkgTGFaSes",
+    authDomain: "aero-user-agent-tool.firebaseapp.com",
+    projectId: "aero-user-agent-tool",
+    storageBucket: "aero-user-agent-tool.appspot.com",
+    messagingSenderId: "292085315062",
+    appId: "1:292085315062:web:74d8d8ff0782b9f81083d7",
+    measurementId: "G-8XR5J0JK4Y",
+  }
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig)
+  const db = getFirestore(app)
+
+  const ADMIN_PASSCODE = "123456789"
+
+  function showNotification(message, type = "info") {
+    const container = document.getElementById("notification-container")
+    if (!container) return
+
+    const toast = document.createElement("div")
+    toast.className = `toast-notification ${type}`
+
+    const iconMap = {
+      success: "✓",
+      error: "✕",
+      warning: "!",
+      info: "i",
+    }
+
+    const icon = iconMap[type] || "i"
+    toast.innerHTML = `<div class="icon">${icon}</div><div class="message">${message}</div>`
+
+    container.appendChild(toast)
+
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      toast.style.animation = "slideOutRight 0.4s ease forwards"
+      setTimeout(() => toast.remove(), 400)
+    }, 4000)
+  }
+
+  function showGlobalNotification(message, type) {
+    showNotification(message, type)
+  }
+
+  const themeToggle = document.getElementById("theme-toggle")
+  const html = document.documentElement
+
+  // Load saved theme preference
+  const savedTheme = localStorage.getItem("theme") || "dark-mode"
+  html.className = savedTheme
+
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const currentTheme = html.className
+      const newTheme = currentTheme === "dark-mode" ? "light-mode" : "dark-mode"
+      html.className = newTheme
+      localStorage.setItem("theme", newTheme)
+    })
+  }
+
+  // Route to appropriate page handler
+  if (document.getElementById("request-btn")) {
+    handleUserPage(db, showNotification)
+  } else if (document.getElementById("upload-btn")) {
+    handleAdminPage(db, ADMIN_PASSCODE, showNotification)
+  }
+})
+
+// ============================================
+// USER PAGE HANDLER
+// ============================================
+function handleUserPage(db, showNotification) {
+  const statsCountEl = document.getElementById("stats-count")
+  const requestBtn = document.getElementById("request-btn")
+  const userAgentDisplayEl = document.getElementById("user-agent-display")
+  const userAgentTextEl = document.getElementById("user-agent-text")
+  const profileNameEl = document.getElementById("profile-name-text")
+  const resolutionEl = document.getElementById("resolution-text")
+  const osEl = document.getElementById("os-text")
+
+  collection(db, "user_agents")
+    .where("status", "==", 0)
+    .onSnapshot(
+      (snapshot) => {
+        statsCountEl.textContent = snapshot.size
+      },
+      (error) => {
+        console.error("Firestore listener error:", error)
+        statsCountEl.textContent = "0"
+        showNotification("Unable to connect to database", "error")
+      },
+    )
+
+  requestBtn.addEventListener("click", async () => {
+    if (requestBtn.disabled) return
+
+    requestBtn.disabled = true
+    const originalText = requestBtn.querySelector(".btn-text").textContent
+    requestBtn.querySelector(".btn-text").textContent = "REQUESTING..."
 
     try {
-        firebase.initializeApp(firebaseConfig);
-    } catch (e) {
-        console.error("Firebase initialization failed. Please check your config and HTML script tags.", e);
-        const systemMessage = document.getElementById('system-message') || document.querySelector('.header p');
-        if (systemMessage) {
-            systemMessage.textContent = "FATAL ERROR: Could not connect to the database.";
-            systemMessage.style.color = '#ff4757';
-        }
-        return; // Stop execution if Firebase fails
+      const query = collection(db, "user_agents").where("status", "==", 0)
+      const snapshot = await query.get()
+
+      if (snapshot.empty) {
+        showNotification("No agents available. Please try again later.", "warning")
+        return
+      }
+
+      const agentDoc = snapshot.docs[0]
+      const agentData = agentDoc.data()
+
+      // Update document status
+      await updateDoc(doc(db, "user_agents", agentDoc.id), { status: 1 })
+
+      // Update UI with new agent data
+      userAgentTextEl.textContent = agentData.User_Agent || "N/A"
+      profileNameEl.textContent = agentData.Profile_Name || "N/A"
+      resolutionEl.textContent = agentData.Resolution || "N/A"
+      osEl.textContent = agentData.OS || "N/A"
+
+      showNotification("Agent received successfully!", "success")
+    } catch (error) {
+      console.error("Error requesting agent:", error)
+      showNotification("Failed to request agent. Try again.", "error")
+    } finally {
+      requestBtn.disabled = false
+      requestBtn.querySelector(".btn-text").textContent = originalText
     }
+  })
 
-    const db = firebase.firestore();
-    const ADMIN_PASSCODE = "123456789"; // Your secret admin passcode
-
-    // Reusable Notification Handler
-    function showNotification(message, type = 'info') {
-        const container = document.getElementById('notification-container');
-        if (!container) return;
-        const toast = document.createElement('div');
-        toast.className = `toast-notification ${type}`;
-        let icon = 'ℹ️';
-        if (type === 'success') icon = '✅';
-        if (type === 'error') icon = '❌';
-        toast.innerHTML = `<div class="icon">${icon}</div><div class="message">${message}</div>`;
-        container.appendChild(toast);
-        setTimeout(() => { toast.remove(); }, 4500);
+  userAgentDisplayEl.addEventListener("click", () => {
+    const text = userAgentTextEl.textContent
+    if (text && !text.startsWith("Request an agent")) {
+      navigator.clipboard
+        .writeText(text)
+        .then(() => showNotification("User Agent copied to clipboard!", "success"))
+        .catch(() => showNotification("Failed to copy. Try again.", "error"))
     }
-
-    // --- Main Logic Router ---
-    if (document.getElementById('request-btn')) {
-        handleUserPage(db, showNotification);
-    } else if (document.getElementById('upload-btn')) {
-        handleAdminPage(db, ADMIN_PASSCODE, showNotification);
-    }
-});
-
-// =================================================
-// == USER PAGE LOGIC (FOR USER AGENTS)
-// =================================================
-function handleUserPage(db, showNotification) {
-    const statsCountEl = document.getElementById('stats-count');
-    const requestBtn = document.getElementById('request-btn');
-    const userAgentDisplayEl = document.getElementById('user-agent-display');
-    const userAgentTextEl = document.getElementById('user-agent-text');
-    const profileNameEl = document.getElementById('profile-name-text');
-    const resolutionEl = document.getElementById('resolution-text');
-    const osEl = document.getElementById('os-text');
-
-    // Real-time listener for stats
-    db.collection('user_agents').where('status', '==', 0).onSnapshot(snapshot => {
-        statsCountEl.textContent = snapshot.size;
-    }, error => {
-        console.error("Firestore listener error:", error);
-        showNotification("DB connection issue for stats.", "error");
-    });
-
-    requestBtn.addEventListener('click', async () => {
-        requestBtn.disabled = true;
-        requestBtn.querySelector('.btn-text').textContent = 'REQUESTING...';
-        showNotification("Requesting new agent...", "info");
-        
-        try {
-            const query = db.collection('user_agents').where('status', '==', 0).limit(1);
-            const snapshot = await query.get();
-            if (snapshot.empty) throw new Error("SYSTEM EMPTY");
-
-            const agentDoc = snapshot.docs[0];
-            const agentData = agentDoc.data();
-            
-            await db.collection('user_agents').doc(agentDoc.id).update({ status: 1 });
-
-            // Populate UI with all details
-            userAgentTextEl.textContent = agentData.User_Agent;
-            profileNameEl.textContent = agentData.Profile_Name || "N/A";
-            resolutionEl.textContent = agentData.Resolution || "N/A";
-            osEl.textContent = agentData.OS || "N/A";
-
-            showNotification("New agent received!", "success");
-        } catch (error) {
-            showNotification(error.message, "error");
-        } finally {
-            requestBtn.disabled = false;
-            requestBtn.querySelector('.btn-text').textContent = 'REQUEST AGENT';
-        }
-    });
-
-    userAgentDisplayEl.addEventListener('click', () => {
-        const text = userAgentTextEl.textContent;
-        if (text && !text.startsWith("Request an agent")) {
-            navigator.clipboard.writeText(text)
-                .then(() => showNotification(`Copied User Agent!`, "success"))
-                .catch(() => showNotification("Failed to copy.", "error"));
-        }
-    });
+  })
 }
 
-// =================================================
-// == ADMIN PAGE LOGIC (FOR CSV UPLOAD & DELETE)
-// =================================================
+// ============================================
+// ADMIN PAGE HANDLER
+// ============================================
 function handleAdminPage(db, ADMIN_PASSCODE, showNotification) {
-    const uploadBtn = document.getElementById('upload-btn');
-    const fileInput = document.getElementById('csv-file-input');
-    const passcode_input = document.getElementById('passcode-input');
-    const fileNameDisplay = document.getElementById('file-name-display');
-    const batchListEl = document.getElementById('batch-list');
-    let fileToUpload = null;
+  const uploadBtn = document.getElementById("upload-btn")
+  const fileInput = document.getElementById("csv-file-input")
+  const passcodeInput = document.getElementById("passcode-input")
+  const fileNameDisplay = document.getElementById("file-name-display")
+  const batchListEl = document.getElementById("batch-list")
 
-    fileInput.addEventListener('change', (event) => {
-        fileToUpload = event.target.files[0];
-        fileNameDisplay.textContent = fileToUpload ? fileToUpload.name : "Click to select a .csv file";
-    });
+  let fileToUpload = null
 
-    uploadBtn.addEventListener('click', () => {
-        if (passcode_input.value !== ADMIN_PASSCODE) { showNotification('Invalid Passcode!', 'error'); return; }
-        if (!fileToUpload) { showNotification('Please select a CSV file first.', 'error'); return; }
-
-        uploadBtn.disabled = true;
-        uploadBtn.querySelector('.btn-text').textContent = 'PARSING...';
-
-        Papa.parse(fileToUpload, {
-            header: true,
-            skipEmptyLines: true,
-            complete: async (results) => {
-                const records = results.data;
-                const batchId = Date.now().toString();
-
-                if (records.length === 0) {
-                    showNotification('CSV is empty or invalid.', 'error');
-                    uploadBtn.disabled = false; return;
-                }
-                
-                uploadBtn.querySelector('.btn-text').textContent = 'UPLOADING...';
-                showNotification(`Uploading ${records.length} records...`, 'info');
-
-                const chunks = [];
-                for (let i = 0; i < records.length; i += 499) { chunks.push(records.slice(i, i + 499)); }
-
-                try {
-                    for (const chunk of chunks) {
-                        const batch = db.batch();
-                        chunk.forEach(record => {
-                            if (record.User_Agent) {
-                                const docRef = db.collection('user_agents').doc();
-                                batch.set(docRef, {
-                                    Profile_Name: record.Profile_Name || "N/A",
-                                    User_Agent: record.User_Agent,
-                                    Resolution: record.Resolution || "N/A",
-                                    OS: record.OS || "N/A",
-                                    status: 0,
-                                    batch_id: batchId
-                                });
-                            }
-                        });
-                        await batch.commit();
-                    }
-                    showNotification(`Successfully uploaded ${records.length} records!`, 'success');
-                    loadBatches();
-                } catch (error) {
-                    showNotification(`Upload Error: ${error.message}`, 'error');
-                } finally {
-                    uploadBtn.disabled = false;
-                    uploadBtn.querySelector('.btn-text').textContent = 'UPLOAD AGENTS';
-                    fileInput.value = '';
-                    fileNameDisplay.textContent = "Click to select a .csv file";
-                    fileToUpload = null;
-                }
-            }
-        });
-    });
-
-    async function loadBatches() {
-        batchListEl.innerHTML = '<li class="history-placeholder">Loading...</li>';
-        const snapshot = await db.collection('user_agents').get();
-        const batches = {};
-
-        snapshot.forEach(doc => {
-            const batchId = doc.data().batch_id;
-            if (batchId) {
-                if (!batches[batchId]) batches[batchId] = 0;
-                batches[batchId]++;
-            }
-        });
-        
-        batchListEl.innerHTML = '';
-        const sortedBatchIds = Object.keys(batches).sort((a, b) => b - a); // Sort newest first
-
-        if(sortedBatchIds.length === 0) {
-            batchListEl.innerHTML = '<li class="history-placeholder">No batches found.</li>'; return;
-        }
-
-        sortedBatchIds.forEach(batchId => {
-            const date = new Date(parseInt(batchId)).toLocaleString();
-            const count = batches[batchId];
-            const item = document.createElement('li');
-            item.className = 'batch-item';
-            item.innerHTML = `<p><strong>${date}</strong> (${count} agents)</p><button class="delete-btn" data-batch-id="${batchId}">Delete</button>`;
-            batchListEl.appendChild(item);
-        });
+  fileInput.addEventListener("change", (event) => {
+    fileToUpload = event.target.files[0]
+    if (fileToUpload) {
+      if (!fileToUpload.name.endsWith(".csv")) {
+        showNotification("Please select a valid CSV file", "error")
+        fileToUpload = null
+        fileInput.value = ""
+        return
+      }
+      fileNameDisplay.textContent = fileToUpload.name
     }
-    
-    batchListEl.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('delete-btn')) {
-            const batchId = e.target.dataset.batchId;
-            if (confirm(`Delete this entire batch? This cannot be undone.`)) {
-                showNotification(`Deleting batch ${batchId}...`, 'info');
-                e.target.disabled = true;
-                e.target.textContent = 'Deleting...';
-                
-                const query = db.collection('user_agents').where('batch_id', '==', batchId);
-                const snapshot = await query.get();
-                
-                const chunks = [];
-                for (let i = 0; i < snapshot.docs.length; i += 499) {
-                    chunks.push(snapshot.docs.slice(i, i + 499));
-                }
-                
-                for (const chunk of chunks) {
-                    const batch = db.batch();
-                    chunk.forEach(doc => batch.delete(doc.ref));
-                    await batch.commit();
-                }
-                
-                showNotification(`Batch deleted successfully!`, 'success');
-                loadBatches();
-            }
-        }
-    });
+  })
 
-    loadBatches();
+  uploadBtn.addEventListener("click", async () => {
+    // Validation
+    if (passcodeInput.value !== ADMIN_PASSCODE) {
+      showNotification("Invalid passcode!", "error")
+      passcodeInput.focus()
+      return
+    }
+
+    if (!fileToUpload) {
+      showNotification("Please select a CSV file first", "error")
+      fileInput.click()
+      return
+    }
+
+    // Start upload process
+    uploadBtn.disabled = true
+    const originalText = uploadBtn.querySelector(".btn-text").textContent
+    uploadBtn.querySelector(".btn-text").textContent = "PARSING..."
+
+    // Parse CSV
+    Papa.parse(fileToUpload, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: false,
+      complete: async (results) => {
+        const records = results.data.filter((r) => r.User_Agent && r.User_Agent.trim())
+
+        if (records.length === 0) {
+          showNotification("CSV file is empty or invalid", "error")
+          uploadBtn.disabled = false
+          uploadBtn.querySelector(".btn-text").textContent = originalText
+          return
+        }
+
+        uploadBtn.querySelector(".btn-text").textContent = "UPLOADING..."
+        showNotification(`Processing ${records.length} records...`, "info")
+
+        const batchId = Date.now().toString()
+
+        try {
+          // Split into chunks for batch operations
+          const chunkSize = 499
+          const chunks = []
+          for (let i = 0; i < records.length; i += chunkSize) {
+            chunks.push(records.slice(i, i + chunkSize))
+          }
+
+          // Upload chunks
+          let uploadedCount = 0
+          for (const chunk of chunks) {
+            const batch = db.batch()
+
+            chunk.forEach((record) => {
+              const docRef = doc(collection(db, "user_agents"))
+              batch.set(docRef, {
+                Profile_Name: record.Profile_Name || "N/A",
+                User_Agent: record.User_Agent.trim(),
+                Resolution: record.Resolution || "N/A",
+                OS: record.OS || "N/A",
+                status: 0,
+                batch_id: batchId,
+                created_at: new Date(),
+              })
+              uploadedCount++
+            })
+
+            await batch.commit()
+          }
+
+          showNotification(`Successfully uploaded ${uploadedCount} agents!`, "success")
+          await loadBatches()
+
+          // Reset form
+          fileInput.value = ""
+          passcodeInput.value = ""
+          fileToUpload = null
+          fileNameDisplay.textContent = "Click to select a .csv file"
+        } catch (error) {
+          console.error("Upload error:", error)
+          showNotification(`Upload failed: ${error.message}`, "error")
+        } finally {
+          uploadBtn.disabled = false
+          uploadBtn.querySelector(".btn-text").textContent = originalText
+        }
+      },
+      error: (error) => {
+        console.error("Parse error:", error)
+        showNotification("Failed to parse CSV file", "error")
+        uploadBtn.disabled = false
+        uploadBtn.querySelector(".btn-text").textContent = originalText
+      },
+    })
+  })
+
+  async function loadBatches() {
+    try {
+      batchListEl.innerHTML = '<li class="history-placeholder">Loading...</li>'
+
+      const snapshot = await getFirestore(db).collection("user_agents").get()
+      const batches = {}
+
+      // Group by batch_id and count
+      snapshot.forEach((doc) => {
+        const batchId = doc.data().batch_id
+        if (batchId) {
+          if (!batches[batchId]) batches[batchId] = 0
+          batches[batchId]++
+        }
+      })
+
+      const sortedBatchIds = Object.keys(batches).sort((a, b) => b - a)
+
+      if (sortedBatchIds.length === 0) {
+        batchListEl.innerHTML = '<li class="history-placeholder">No batches found</li>'
+        return
+      }
+
+      batchListEl.innerHTML = ""
+
+      sortedBatchIds.forEach((batchId) => {
+        const date = new Date(Number.parseInt(batchId)).toLocaleString()
+        const count = batches[batchId]
+
+        const item = document.createElement("li")
+        item.className = "batch-item"
+        item.innerHTML = `
+                    <p>
+                        <strong>${date}</strong>
+                        <br>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">${count} agent${count !== 1 ? "s" : ""}</span>
+                    </p>
+                    <button class="delete-btn" data-batch-id="${batchId}" aria-label="Delete batch">Delete</button>
+                `
+        batchListEl.appendChild(item)
+      })
+    } catch (error) {
+      console.error("Error loading batches:", error)
+      batchListEl.innerHTML = '<li class="history-placeholder">Error loading batches</li>'
+    }
+  }
+
+  batchListEl.addEventListener("click", async (e) => {
+    if (e.target.classList.contains("delete-btn")) {
+      const batchId = e.target.dataset.batchId
+      const deleteBtn = e.target
+
+      if (!confirm("Delete this batch? This action cannot be undone.")) {
+        return
+      }
+
+      deleteBtn.disabled = true
+      const originalText = deleteBtn.textContent
+      deleteBtn.textContent = "Deleting..."
+
+      try {
+        const query = collection(db, "user_agents").where("batch_id", "==", batchId)
+        const snapshot = await query.get()
+
+        if (snapshot.empty) {
+          showNotification("Batch not found", "warning")
+          await loadBatches()
+          return
+        }
+
+        const chunkSize = 499
+        const chunks = []
+        for (let i = 0; i < snapshot.docs.length; i += chunkSize) {
+          chunks.push(snapshot.docs.slice(i, i + chunkSize))
+        }
+
+        for (const chunk of chunks) {
+          const batch = db.batch()
+          chunk.forEach((doc) => batch.delete(doc.ref))
+          await batch.commit()
+        }
+
+        showNotification("Batch deleted successfully", "success")
+        await loadBatches()
+      } catch (error) {
+        console.error("Delete error:", error)
+        showNotification("Failed to delete batch", "error")
+        deleteBtn.disabled = false
+        deleteBtn.textContent = originalText
+      }
+    }
+  })
+
+  // Load batches on page load
+  loadBatches()
 }
