@@ -2,9 +2,8 @@
 // AERO AGENT SYSTEM - Professional Edition
 // ============================================
 
-// Import Firebase and PapaParse
-import { initializeApp } from "firebase/app"
-import { getFirestore, collection, doc, updateDoc } from "firebase/firestore"
+import { firebase } from "firebase/app"
+import "firebase/firestore"
 import Papa from "papaparse"
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -19,8 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Initialize Firebase
-  const app = initializeApp(firebaseConfig)
-  const db = getFirestore(app)
+  const app = firebase.initializeApp(firebaseConfig)
+  const db = firebase.firestore(app)
 
   const ADMIN_PASSCODE = "123456789"
 
@@ -35,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
       success: "✓",
       error: "✕",
       warning: "!",
-      info: "i",
+      info: "ℹ",
     }
 
     const icon = iconMap[type] || "i"
@@ -50,10 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 4000)
   }
 
-  function showGlobalNotification(message, type) {
-    showNotification(message, type)
-  }
-
+  // Theme Toggle Handler
   const themeToggle = document.getElementById("theme-toggle")
   const html = document.documentElement
 
@@ -90,7 +86,8 @@ function handleUserPage(db, showNotification) {
   const resolutionEl = document.getElementById("resolution-text")
   const osEl = document.getElementById("os-text")
 
-  collection(db, "user_agents")
+  // Set up real-time listener for available agents count
+  db.collection("user_agents")
     .where("status", "==", 0)
     .onSnapshot(
       (snapshot) => {
@@ -103,6 +100,7 @@ function handleUserPage(db, showNotification) {
       },
     )
 
+  // Request Agent Button Handler
   requestBtn.addEventListener("click", async () => {
     if (requestBtn.disabled) return
 
@@ -111,19 +109,21 @@ function handleUserPage(db, showNotification) {
     requestBtn.querySelector(".btn-text").textContent = "REQUESTING..."
 
     try {
-      const query = collection(db, "user_agents").where("status", "==", 0)
-      const snapshot = await query.get()
+      // Get first available agent
+      const snapshot = await db.collection("user_agents").where("status", "==", 0).limit(1).get()
 
       if (snapshot.empty) {
         showNotification("No agents available. Please try again later.", "warning")
+        requestBtn.disabled = false
+        requestBtn.querySelector(".btn-text").textContent = originalText
         return
       }
 
       const agentDoc = snapshot.docs[0]
       const agentData = agentDoc.data()
 
-      // Update document status
-      await updateDoc(doc(db, "user_agents", agentDoc.id), { status: 1 })
+      // Update document status to 1 (used)
+      await db.collection("user_agents").doc(agentDoc.id).update({ status: 1 })
 
       // Update UI with new agent data
       userAgentTextEl.textContent = agentData.User_Agent || "N/A"
@@ -141,6 +141,7 @@ function handleUserPage(db, showNotification) {
     }
   })
 
+  // Copy to Clipboard on User Agent Click
   userAgentDisplayEl.addEventListener("click", () => {
     const text = userAgentTextEl.textContent
     if (text && !text.startsWith("Request an agent")) {
@@ -164,6 +165,7 @@ function handleAdminPage(db, ADMIN_PASSCODE, showNotification) {
 
   let fileToUpload = null
 
+  // File Input Change Handler
   fileInput.addEventListener("change", (event) => {
     fileToUpload = event.target.files[0]
     if (fileToUpload) {
@@ -171,12 +173,14 @@ function handleAdminPage(db, ADMIN_PASSCODE, showNotification) {
         showNotification("Please select a valid CSV file", "error")
         fileToUpload = null
         fileInput.value = ""
+        fileNameDisplay.textContent = "Click to select a .csv file"
         return
       }
       fileNameDisplay.textContent = fileToUpload.name
     }
   })
 
+  // Upload Button Handler
   uploadBtn.addEventListener("click", async () => {
     // Validation
     if (passcodeInput.value !== ADMIN_PASSCODE) {
@@ -196,7 +200,7 @@ function handleAdminPage(db, ADMIN_PASSCODE, showNotification) {
     const originalText = uploadBtn.querySelector(".btn-text").textContent
     uploadBtn.querySelector(".btn-text").textContent = "PARSING..."
 
-    // Parse CSV
+    // Parse CSV using PapaParse
     Papa.parse(fileToUpload, {
       header: true,
       skipEmptyLines: true,
@@ -217,20 +221,16 @@ function handleAdminPage(db, ADMIN_PASSCODE, showNotification) {
         const batchId = Date.now().toString()
 
         try {
-          // Split into chunks for batch operations
-          const chunkSize = 499
-          const chunks = []
-          for (let i = 0; i < records.length; i += chunkSize) {
-            chunks.push(records.slice(i, i + chunkSize))
-          }
-
-          // Upload chunks
+          // Upload records in batches
+          const chunkSize = 100
           let uploadedCount = 0
-          for (const chunk of chunks) {
+
+          for (let i = 0; i < records.length; i += chunkSize) {
+            const chunk = records.slice(i, i + chunkSize)
             const batch = db.batch()
 
             chunk.forEach((record) => {
-              const docRef = doc(collection(db, "user_agents"))
+              const docRef = db.collection("user_agents").doc()
               batch.set(docRef, {
                 Profile_Name: record.Profile_Name || "N/A",
                 User_Agent: record.User_Agent.trim(),
@@ -271,11 +271,12 @@ function handleAdminPage(db, ADMIN_PASSCODE, showNotification) {
     })
   })
 
+  // Load Batches Function
   async function loadBatches() {
     try {
       batchListEl.innerHTML = '<li class="history-placeholder">Loading...</li>'
 
-      const snapshot = await getFirestore(db).collection("user_agents").get()
+      const snapshot = await db.collection("user_agents").get()
       const batches = {}
 
       // Group by batch_id and count
@@ -303,13 +304,13 @@ function handleAdminPage(db, ADMIN_PASSCODE, showNotification) {
         const item = document.createElement("li")
         item.className = "batch-item"
         item.innerHTML = `
-                    <p>
-                        <strong>${date}</strong>
-                        <br>
-                        <span style="font-size: 0.85rem; color: var(--text-secondary);">${count} agent${count !== 1 ? "s" : ""}</span>
-                    </p>
-                    <button class="delete-btn" data-batch-id="${batchId}" aria-label="Delete batch">Delete</button>
-                `
+          <p>
+            <strong>${date}</strong>
+            <br>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">${count} agent${count !== 1 ? "s" : ""}</span>
+          </p>
+          <button class="delete-btn" data-batch-id="${batchId}" aria-label="Delete batch">Delete</button>
+        `
         batchListEl.appendChild(item)
       })
     } catch (error) {
@@ -318,6 +319,7 @@ function handleAdminPage(db, ADMIN_PASSCODE, showNotification) {
     }
   }
 
+  // Delete Batch Handler
   batchListEl.addEventListener("click", async (e) => {
     if (e.target.classList.contains("delete-btn")) {
       const batchId = e.target.dataset.batchId
@@ -332,8 +334,7 @@ function handleAdminPage(db, ADMIN_PASSCODE, showNotification) {
       deleteBtn.textContent = "Deleting..."
 
       try {
-        const query = collection(db, "user_agents").where("batch_id", "==", batchId)
-        const snapshot = await query.get()
+        const snapshot = await db.collection("user_agents").where("batch_id", "==", batchId).get()
 
         if (snapshot.empty) {
           showNotification("Batch not found", "warning")
@@ -341,15 +342,16 @@ function handleAdminPage(db, ADMIN_PASSCODE, showNotification) {
           return
         }
 
-        const chunkSize = 499
-        const chunks = []
+        // Delete in chunks
+        const chunkSize = 100
         for (let i = 0; i < snapshot.docs.length; i += chunkSize) {
-          chunks.push(snapshot.docs.slice(i, i + chunkSize))
-        }
-
-        for (const chunk of chunks) {
+          const chunk = snapshot.docs.slice(i, i + chunkSize)
           const batch = db.batch()
-          chunk.forEach((doc) => batch.delete(doc.ref))
+
+          chunk.forEach((doc) => {
+            batch.delete(doc.ref)
+          })
+
           await batch.commit()
         }
 
