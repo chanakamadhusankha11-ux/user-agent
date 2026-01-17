@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="description" content="Aero Agent Admin - Upload and Manage User Agents">
     <meta name="theme-color" content="#0f0f1e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Aero Admin Panel</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap" rel="stylesheet">
@@ -48,7 +50,7 @@
 
         <!-- Upload Section -->
         <section class="card">
-            <h2 style="margin-bottom: 20px; font-size: 1.3rem; color: var(--text-primary);">Upload User Agents</h2>
+            <h2 class="section-title">Upload User Agents</h2>
 
             <!-- File Input -->
             <input type="file" id="csv-file-input" accept=".csv" aria-label="Upload CSV file">
@@ -60,14 +62,14 @@
             <input type="password" id="passcode-input" placeholder="Enter Admin Passcode" aria-label="Admin Passcode">
 
             <!-- Upload Button -->
-            <button id="upload-btn" aria-label="Upload Agents">
+            <button id="upload-btn" class="btn-success" aria-label="Upload Agents">
                 <span class="btn-text">UPLOAD AGENTS</span>
             </button>
         </section>
 
         <!-- Batch Management Section -->
         <section class="card secondary-card">
-            <h2 style="margin-bottom: 20px; font-size: 1.3rem; color: var(--text-primary);">Manage Batches</h2>
+            <h2 class="section-title">Manage Batches</h2>
             <div class="history-container">
                 <ul id="batch-list">
                     <li class="history-placeholder">Loading batches...</li>
