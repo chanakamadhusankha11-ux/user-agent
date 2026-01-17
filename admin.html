@@ -2,47 +2,90 @@
 <html lang="en" class="dark-mode">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aero Agent Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="Aero Agent Admin - Upload and Manage User Agents">
+    <meta name="theme-color" content="#0f0f1e">
+    <title>Aero Admin Panel</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
-<body class="admin-body">
+<body>
+    <!-- Notification Container -->
     <div id="notification-container"></div>
-    <main class="main-container admin-container">
-        <header class="header"><h1>AERO ADMIN</h1></header>
 
+    <!-- Top Navigation Bar -->
+    <div class="top-bar">
+        <a href="index.html" class="admin-link" title="Back to User Page" aria-label="Back to User Page">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <button id="theme-toggle" title="Toggle Theme" aria-label="Theme Toggle">
+            <svg class="sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-container admin-container">
+        <!-- Header -->
+        <header class="header">
+            <h1>AERO ADMIN</h1>
+            <p>Manage User Agents</p>
+        </header>
+
+        <!-- Upload Section -->
         <section class="card">
-            <h2>Upload User Agent List (.csv)</h2>
-            
-            <!-- NEW: File input instead of textarea -->
-            <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+            <h2 style="margin-bottom: 20px; font-size: 1.3rem; color: var(--text-primary);">Upload User Agents</h2>
+
+            <!-- File Input -->
+            <input type="file" id="csv-file-input" accept=".csv" aria-label="Upload CSV file">
             <label for="csv-file-input" class="file-input-label">
                 <span id="file-name-display">Click to select a .csv file</span>
             </label>
 
-            <input type="password" id="passcode-input" placeholder="Enter Admin Passcode">
-            <button id="upload-btn"><div class="btn-bg"></div><span class="btn-text">UPLOAD AGENTS</span></button>
+            <!-- Passcode Input -->
+            <input type="password" id="passcode-input" placeholder="Enter Admin Passcode" aria-label="Admin Passcode">
+
+            <!-- Upload Button -->
+            <button id="upload-btn" aria-label="Upload Agents">
+                <span class="btn-text">UPLOAD AGENTS</span>
+            </button>
         </section>
 
-        <!-- NEW: Batch Management Section -->
+        <!-- Batch Management Section -->
         <section class="card secondary-card">
-            <h2>Manage Uploads (Batches)</h2>
+            <h2 style="margin-bottom: 20px; font-size: 1.3rem; color: var(--text-primary);">Manage Batches</h2>
             <div class="history-container">
-                <ul id="batch-list"><li class="history-placeholder">Loading batches...</li></ul>
+                <ul id="batch-list">
+                    <li class="history-placeholder">Loading batches...</li>
+                </ul>
             </div>
         </section>
 
+        <!-- Back Link -->
         <a href="index.html" class="back-link">← Back to User Page</a>
     </main>
 
     <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
 
-    <!-- NEW: Papa Parse for CSV parsing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    
+    <!-- Papa Parse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
     <!-- App Script -->
     <script src="script.js"></script>
 </body>
