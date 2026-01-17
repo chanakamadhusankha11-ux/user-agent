@@ -59,6 +59,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   transition: background-color 0.3s ease;
+  line-height: 1.6;
 }
 
 /* --- 3. SCROLLBAR STYLING --- */
@@ -115,6 +116,7 @@ body {
   background-color: var(--surface-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
+  border-color: var(--primary);
 }
 
 .admin-link:active,
@@ -207,6 +209,13 @@ body {
   animation-delay: 0.2s;
 }
 
+.section-title {
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 /* --- 8. STATS DISPLAY --- */
 .stats-display {
   margin-bottom: 32px;
@@ -215,6 +224,11 @@ body {
   border-radius: 12px;
   text-align: center;
   border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.stats-display:hover {
+  border-color: var(--primary);
 }
 
 .counter-value {
@@ -239,6 +253,7 @@ body {
 }
 
 /* --- 9. USER AGENT DISPLAY --- */
+.user-agent-box,
 #user-agent-display {
   min-height: 100px;
   padding: 20px;
@@ -255,10 +270,12 @@ body {
   word-break: break-word;
 }
 
+.user-agent-box:hover,
 #user-agent-display:hover {
   border-color: var(--primary);
   background: var(--surface-hover);
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+  transform: translateY(-2px);
 }
 
 #user-agent-text {
@@ -289,6 +306,7 @@ body {
 .detail-item:hover {
   border-color: var(--primary);
   background: var(--surface-hover);
+  transform: translateY(-2px);
 }
 
 .detail-item label {
@@ -315,6 +333,8 @@ button {
   font-family: var(--font-primary);
 }
 
+.btn-primary,
+.btn-success,
 #request-btn,
 #upload-btn {
   width: 100%;
@@ -333,34 +353,43 @@ button {
   letter-spacing: 0.5px;
 }
 
-#request-btn:hover,
-#upload-btn:hover {
+.btn-primary:hover,
+#request-btn:hover {
   background-color: var(--surface-hover);
   border-color: var(--primary);
   transform: translateY(-2px);
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
 }
 
-#request-btn:active,
-#upload-btn:active {
+.btn-primary:active,
+#request-btn:active {
   transform: translateY(0);
 }
 
-#request-btn:disabled,
-#upload-btn:disabled {
+.btn-primary:disabled,
+#request-btn:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
+.btn-success,
 #upload-btn {
   background: linear-gradient(135deg, var(--success), #059669);
   border-color: var(--success);
   color: white;
 }
 
+.btn-success:hover,
 #upload-btn:hover {
   background: linear-gradient(135deg, #059669, #047857);
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-success:disabled,
+#upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-text {
@@ -394,6 +423,7 @@ button {
   border-color: var(--primary);
   color: var(--primary);
   background: rgba(0, 212, 255, 0.05);
+  transform: translateY(-2px);
 }
 
 #file-name-display {
@@ -469,6 +499,7 @@ input::placeholder {
 .batch-item:hover {
   border-color: var(--primary);
   background-color: var(--surface-hover);
+  transform: translateY(-1px);
 }
 
 .batch-item p {
@@ -515,6 +546,7 @@ input::placeholder {
 .delete-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* --- 16. BACK LINK --- */
@@ -577,6 +609,7 @@ input::placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 700;
 }
 
 .toast-notification .message {
@@ -737,6 +770,11 @@ input::placeholder {
     border-radius: 12px;
   }
 
+  .section-title {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+  }
+
   .stats-display {
     padding: 16px;
     margin-bottom: 20px;
@@ -746,6 +784,7 @@ input::placeholder {
     font-size: 2.5rem;
   }
 
+  .user-agent-box,
   #user-agent-display {
     min-height: 80px;
     padding: 16px;
@@ -755,6 +794,8 @@ input::placeholder {
     grid-template-columns: 1fr;
   }
 
+  .btn-primary,
+  .btn-success,
   #request-btn,
   #upload-btn {
     padding: 14px;
@@ -774,6 +815,12 @@ input::placeholder {
   #theme-toggle {
     width: 44px;
     height: 44px;
+  }
+
+  .admin-link svg,
+  #theme-toggle svg {
+    width: 20px;
+    height: 20px;
   }
 }
 
